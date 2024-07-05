@@ -245,7 +245,7 @@ export const BUTTON_STYLES = twv.tv({
     wrapper: 'relative block',
     loader: 'absolute inset-0 flex items-center justify-center',
     content: 'flex items-center gap-[0.5em]',
-    text: 'inline-flex items-center justify-center gap-1',
+    text: 'inline-flex items-center justify-center gap-1 w-full',
     icon: 'h-[1.906cap] w-[1.906cap] flex-none aspect-square flex items-center justify-center',
   },
   defaultVariants: {

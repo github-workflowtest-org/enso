@@ -62,6 +62,7 @@ export default function SettingsSidebar(props: SettingsSidebarProps) {
                 >
                   {name}
                 </aria.Header>
+
                 <ariaComponents.ButtonGroup gap="xxsmall" direction="column" align="start">
                   {visibleTabData.map(tabData => (
                     <SidebarTabButton
@@ -70,6 +71,7 @@ export default function SettingsSidebar(props: SettingsSidebarProps) {
                       icon={tabData.icon}
                       label={getText(tabData.nameId)}
                       active={tabData.settingsTab === tab}
+                      href={tabData.link}
                       onPress={() => {
                         setTab(tabData.settingsTab)
                       }}

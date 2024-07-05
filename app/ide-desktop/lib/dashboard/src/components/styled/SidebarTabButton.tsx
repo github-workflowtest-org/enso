@@ -1,6 +1,8 @@
 /** @file A styled button representing a tab on a sidebar. */
 import * as React from 'react'
 
+import OpenInNewIcon from 'enso-assets/open.svg'
+
 import type * as aria from '#/components/aria'
 import * as ariaComponent from '#/components/AriaComponents'
 
@@ -18,19 +20,23 @@ export interface SidebarTabButtonProps {
   readonly icon: string
   readonly label: string
   readonly onPress: (event: aria.PressEvent) => void
+  readonly href?: string | undefined
 }
 
 /** A styled button representing a tab on a sidebar. */
 export default function SidebarTabButton(props: SidebarTabButtonProps) {
-  const { isDisabled = false, active = false, icon, label, onPress } = props
+  const { isDisabled = false, active = false, icon, label, onPress, href } = props
+
+  const isLink = href != null
 
   return (
     <ariaComponent.Button
+      {...(isLink
+        ? { href, icon: ({ isHovered }) => (isHovered ? OpenInNewIcon : icon), target: '_blank' }
+        : { onPress, icon })}
       variant="ghost"
       size="medium"
-      onPress={onPress}
       isDisabled={isDisabled}
-      icon={icon}
       rounded="full"
       className={active ? 'bg-white opacity-100' : ''}
     >

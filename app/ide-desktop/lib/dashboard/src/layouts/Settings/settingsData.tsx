@@ -4,6 +4,7 @@ import * as React from 'react'
 import isEmail from 'validator/lib/isEmail'
 
 import ComputerIcon from 'enso-assets/computer.svg'
+import CreditCardIcon from 'enso-assets/credit_card.svg'
 import KeyboardShortcutsIcon from 'enso-assets/keyboard_shortcuts.svg'
 import LogIcon from 'enso-assets/log.svg'
 import PeopleSettingsIcon from 'enso-assets/people_settings.svg'
@@ -246,6 +247,14 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
       },
     ],
   },
+  [SettingsTabType.billingAndPlans]: {
+    nameId: 'billingAndPlansSettingsTab',
+    settingsTab: SettingsTabType.billingAndPlans,
+    icon: CreditCardIcon,
+    organizationOnly: true,
+    sections: [],
+    link: 'https://www.enso.org/pricing',
+  },
   [SettingsTabType.members]: {
     nameId: 'membersSettingsTab',
     settingsTab: SettingsTabType.members,
@@ -359,6 +368,7 @@ export const SETTINGS_DATA: SettingsData = [
   {
     nameId: 'accessSettingsTabSection',
     tabs: [
+      SETTINGS_TAB_DATA[SettingsTabType.billingAndPlans],
       SETTINGS_TAB_DATA[SettingsTabType.members],
       SETTINGS_TAB_DATA[SettingsTabType.userGroups],
     ],
@@ -462,6 +472,11 @@ export interface SettingsTabData {
    * a paywall is shown instead of the settings tab. */
   readonly feature?: billing.PaywallFeatureName
   readonly sections: readonly SettingsSectionData[]
+  /**
+   * If settings tab is a link, this is the URL to link to.
+   * When this is set, the settings tab will be rendered as a link. with openInNewTab icon and target="_blank"
+   */
+  readonly link?: string
 }
 
 // ==============================
