@@ -265,6 +265,8 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
               if (url != null) {
                 window.open(url, '_blank')?.focus()
               }
+
+              return url
             })
             .catch(err => {
               context.toastAndLog('arbitraryErrorTitle', err)
