@@ -784,4 +784,11 @@ export default class LocalBackend extends Backend {
   override logEvent() {
     return this.invalidOperation()
   }
+
+  /**
+   * Invalid operation.
+   */
+  override createCustomerPortalSession() {
+    return this.invalidOperation()
+  }
 }

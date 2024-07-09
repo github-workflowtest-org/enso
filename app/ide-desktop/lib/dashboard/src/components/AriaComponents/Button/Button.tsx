@@ -59,7 +59,7 @@ export interface BaseButtonProps<Render>
    * Handler that is called when the press is released over the target.
    * If the handler returns a promise, the button will be in a loading state until the promise resolves.
    */
-  readonly onPress?: (event: aria.PressEvent) => Promise<void> | void
+  readonly onPress?: ((event: aria.PressEvent) => Promise<void> | void) | null | undefined
   readonly contentClassName?: string
   readonly testId?: string
   readonly isDisabled?: boolean
@@ -365,7 +365,7 @@ export const Button = React.forwardRef(function Button(
 
   const handlePress = (event: aria.PressEvent): void => {
     if (!isDisabled) {
-      const result = onPress(event)
+      const result = onPress?.(event)
 
       if (result instanceof Promise) {
         setImplicitlyLoading(true)
