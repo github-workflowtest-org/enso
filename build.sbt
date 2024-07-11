@@ -164,6 +164,7 @@ GatherLicenses.distributions := Seq(
   makeStdLibDistribution("Image", Distribution.sbtProjects(`std-image`)),
   makeStdLibDistribution("AWS", Distribution.sbtProjects(`std-aws`)),
   makeStdLibDistribution("Snowflake", Distribution.sbtProjects(`std-snowflake`))
+  makeStdLibDistribution("Microsoft", Distribution.sbtProjects(`std-microsoft`))
 )
 
 GatherLicenses.licenseConfigurations := Set("compile")
@@ -343,6 +344,7 @@ lazy val enso = (project in file("."))
     `std-table`,
     `std-aws`,
     `std-snowflake`,
+    `std-microsoft`,
     `http-test-helper`,
     `enso-test-java-helpers`,
     `exploratory-benchmark-java-helpers`,
@@ -560,6 +562,7 @@ val fansiVersion            = "0.4.0"
 val httpComponentsVersion   = "4.4.1"
 val apacheArrowVersion      = "14.0.1"
 val snowflakeJDBCVersion    = "3.15.0"
+val mssqlserverJDBCVersion  = "12.7.0"
 val jsoniterVersion         = "2.28.5"
 
 // ============================================================================
@@ -1929,6 +1932,7 @@ lazy val runtime = (project in file("engine/runtime"))
       .dependsOn(`std-table` / Compile / packageBin)
       .dependsOn(`std-aws` / Compile / packageBin)
       .dependsOn(`std-snowflake` / Compile / packageBin)
+      .dependsOn(`std-microsoft` / Compile / packageBin)
       .value
   )
   .dependsOn(`common-polyglot-core-utils`)
@@ -3197,6 +3201,8 @@ val `std-aws-polyglot-root` =
   stdLibComponentRoot("AWS") / "polyglot" / "java"
 val `std-snowflake-polyglot-root` =
   stdLibComponentRoot("Snowflake") / "polyglot" / "java"
+val `std-microsoft-polyglot-root` =
+  stdLibComponentRoot("Microsoft") / "polyglot" / "java"
 
 lazy val `std-base` = project
   .in(file("std-bits") / "base")
@@ -3504,6 +3510,36 @@ lazy val `std-snowflake` = project
   .dependsOn(`std-table` % "provided")
   .dependsOn(`std-database` % "provided")
 
+  lazy val `std-microsoft` = project
+  .in(file("std-bits") / "microsoft")
+  .settings(
+    frgaalJavaCompilerSetting,
+    autoScalaLibrary := false,
+    Compile / compile / compileInputs := (Compile / compile / compileInputs)
+      .dependsOn(SPIHelpers.ensureSPIConsistency)
+      .value,
+    Compile / packageBin / artifactPath :=
+      `std-microsoft-polyglot-root` / "std-microsoft.jar",
+    libraryDependencies ++= Seq(
+      "org.netbeans.api" % "org-openide-util-lookup" % netbeansApiVersion % "provided",
+      "com.microsoft.sqlserver" % "mssql-jdbc" % mssqlserverJDBCVersion
+    ),
+    Compile / packageBin := Def.task {
+      val result = (Compile / packageBin).value
+      val _ = StdBits
+        .copyDependencies(
+          `std-microsoft-polyglot-root`,
+          Seq("std-microsoft.jar"),
+          ignoreScalaLibrary = true
+        )
+        .value
+      result
+    }.value
+  )
+  .dependsOn(`std-base` % "provided")
+  .dependsOn(`std-table` % "provided")
+  .dependsOn(`std-database` % "provided")
+
 /* Note [Native Image Workaround for GraalVM 20.2]
  * ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
  * In GraalVM 20.2 the Native Image build of even simple Scala programs has
@@ -3650,6 +3686,7 @@ val stdBitsProjects =
     "Database",
     "Google_Api",
     "Image",
+    "Microsoft",
     "Snowflake",
     "Table"
   ) ++ allStdBitsSuffix
@@ -3721,6 +3758,8 @@ pkgStdLibInternal := Def.inputTask {
       (`std-aws` / Compile / packageBin).value
     case "Snowflake" =>
       (`std-snowflake` / Compile / packageBin).value
+    case "Microsoft" =>
+      (`std-microsoft` / Compile / packageBin).value
     case _ if buildAllCmd =>
       (`std-base` / Compile / packageBin).value
       (`enso-test-java-helpers` / Compile / packageBin).value
@@ -3732,6 +3771,7 @@ pkgStdLibInternal := Def.inputTask {
       (`std-google-api` / Compile / packageBin).value
       (`std-aws` / Compile / packageBin).value
       (`std-snowflake` / Compile / packageBin).value
+      (`std-microsoft` / Compile / packageBin).value
     case _ =>
   }
   val libs =
