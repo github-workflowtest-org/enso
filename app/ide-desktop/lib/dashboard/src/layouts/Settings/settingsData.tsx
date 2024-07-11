@@ -270,6 +270,7 @@ export const SETTINGS_TAB_DATA: Readonly<Record<SettingsTabType, SettingsTabData
             })
             .catch(err => {
               context.toastAndLog('arbitraryErrorTitle', err)
+              throw err
             })
         },
       })
