@@ -493,6 +493,14 @@ export interface UserGroupPermission {
 /** User permission for a specific user or user group. */
 export type AssetPermission = UserGroupPermission | UserPermission
 
+/**
+ * Response from the "create customer portal session" endpoint.
+ * Returns a URL that the user can use to access the customer portal and manage their subscription.
+ */
+export interface CreateCustomerPortalSessionResponse {
+    readonly url: string | null
+}
+
 /** Whether an {@link AssetPermission} is a {@link UserPermission}. */
 export function isUserPermission(permission: AssetPermission): permission is UserPermission {
     return 'user' in permission
@@ -1470,4 +1478,11 @@ export default abstract class Backend {
         title: string,
         abortSignal?: AbortSignal
     ): Promise<Project>
+
+    /**
+     * Get the URL for the customer portal.
+     * @see https://stripe.com/docs/billing/subscriptions/integrating-customer-portal
+     * @param returnUrl - The URL to redirect to after the customer visits the portal.
+     */
+    abstract createCustomerPortalSession(returnUrl: string): Promise<string | null>
 }

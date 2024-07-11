@@ -79,7 +79,7 @@ export const POST_LOG_EVENT_PATH = 'logs'
  * Relative HTTP path to the "get customer portal session" endpoint of the Cloud backend API.
  */
 export function getCustomerPortalSessionPath(returnUrl?: string) {
-  const baseUrl = 'billing/create-customer-portal-session'
+  const baseUrl = 'payments/customer-portal-sessions/create'
 
   if (returnUrl === undefined) {
     return baseUrl
