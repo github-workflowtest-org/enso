@@ -39,6 +39,7 @@ import * as tabBar from '#/layouts/TabBar'
 import TabBar from '#/layouts/TabBar'
 import UserBar from '#/layouts/UserBar'
 
+import * as aria from '#/components/aria'
 import Page from '#/components/Page'
 
 import ManagePermissionsModal from '#/modals/ManagePermissionsModal'
@@ -234,7 +235,15 @@ export default function Dashboard(props: DashboardProps) {
 
   const [category, setCategory] = searchParamsState.useSearchParamsState(
     'driveCategory',
-    () => defaultCategory,
+    () => {
+      const isUserEnabled = user.isEnabled
+
+      if (!isUserEnabled && localBackend != null) {
+        return Category.local
+      } else {
+        return defaultCategory
+      }
+    },
     (value): value is Category => {
       if (array.includes(Object.values(Category), value)) {
         return categoryModule.isLocal(value) ? localBackend != null : true
@@ -292,17 +301,7 @@ export default function Dashboard(props: DashboardProps) {
     eventHooks.useEvent<assetListEvent.AssetListEvent>()
   const [assetEvents, dispatchAssetEvent] = eventHooks.useEvent<assetEvent.AssetEvent>()
 
-  const isCloud = categoryModule.isCloud(category)
-  const isUserEnabled = user.isEnabled
-
   const selectedProject = launchedProjects.find(p => p.id === page) ?? null
-
-  if (isCloud && !isUserEnabled && localBackend != null) {
-    setTimeout(() => {
-      // This sets `BrowserRouter`, so it must not be set synchronously.
-      setCategory(Category.local)
-    })
-  }
 
   const openProjectMutation = reactQuery.useMutation({
     mutationKey: ['openProject'],
@@ -577,9 +576,66 @@ export default function Dashboard(props: DashboardProps) {
             unsetModal()
           }}
         >
-          <div className="flex">
-            <TabBar>
+          <div className="flex h-full w-full">
+            <TabBar
+              defaultSelectedKey={page}
+              onSelectionChange={setPage}
+              content={
+                <>
+                  <aria.TabPanel
+                    shouldForceMount
+                    id={TabType.drive}
+                    className="flex h-full [&[data-inert]]:hidden"
+                  >
+                    <Drive
+                      hidden={false}
+                      assetsManagementApiRef={assetManagementApiRef}
+                      openedProjects={launchedProjects}
+                      category={category}
+                      setCategory={setCategory}
+                      initialProjectName={initialProjectName}
+                      assetListEvents={assetListEvents}
+                      dispatchAssetListEvent={dispatchAssetListEvent}
+                      assetEvents={assetEvents}
+                      dispatchAssetEvent={dispatchAssetEvent}
+                      doOpenProject={doOpenProject}
+                      doOpenEditor={doOpenEditor}
+                      doCloseProject={doCloseProject}
+                    />
+                  </aria.TabPanel>
+
+                  {launchedProjects.map(project => (
+                    <aria.TabPanel
+                      shouldForceMount
+                      id={project.id}
+                      className="flex grow [&[data-inert]]:hidden"
+                    >
+                      <Editor
+                        key={project.id}
+                        hidden={page !== project.id}
+                        ydocUrl={ydocUrl}
+                        project={project}
+                        projectId={project.id}
+                        appRunner={appRunner}
+                        isOpening={openProjectMutation.isPending}
+                        isOpeningFailed={openProjectMutation.isError}
+                        openingError={openProjectMutation.error}
+                        startProject={openProjectMutation.mutate}
+                        renameProject={newName => {
+                          renameProjectMutation.mutate({ newName, project })
+                        }}
+                      />
+                    </aria.TabPanel>
+                  ))}
+
+                  <aria.TabPanel id={TabType.settings} className="flex grow">
+                    <Settings />
+                  </aria.TabPanel>
+                </>
+              }
+            >
               <tabBar.Tab
+                id={TabType.drive}
                 isActive={page === TabType.drive}
                 icon={DriveIcon}
                 labelId="drivePageName"
@@ -592,6 +648,7 @@ export default function Dashboard(props: DashboardProps) {
 
               {launchedProjects.map(project => (
                 <tabBar.Tab
+                  id={project.id}
                   project={project}
                   key={project.id}
                   isActive={page === project.id}
@@ -613,7 +670,8 @@ export default function Dashboard(props: DashboardProps) {
 
               {page === TabType.settings && (
                 <tabBar.Tab
-                  isActive
+                  id={TabType.settings}
+                  isActive={false}
                   icon={SettingsIcon}
                   labelId="settingsPageName"
                   onPress={() => {
@@ -638,41 +696,6 @@ export default function Dashboard(props: DashboardProps) {
             />
           </div>
 
-          <Drive
-            assetsManagementApiRef={assetManagementApiRef}
-            openedProjects={launchedProjects}
-            category={category}
-            setCategory={setCategory}
-            hidden={page !== TabType.drive}
-            initialProjectName={initialProjectName}
-            assetListEvents={assetListEvents}
-            dispatchAssetListEvent={dispatchAssetListEvent}
-            assetEvents={assetEvents}
-            dispatchAssetEvent={dispatchAssetEvent}
-            doOpenProject={doOpenProject}
-            doOpenEditor={doOpenEditor}
-            doCloseProject={doCloseProject}
-          />
-
-          {launchedProjects.map(project => (
-            <Editor
-              key={project.id}
-              hidden={page !== project.id}
-              ydocUrl={ydocUrl}
-              project={project}
-              projectId={project.id}
-              appRunner={appRunner}
-              isOpening={openProjectMutation.isPending}
-              isOpeningFailed={openProjectMutation.isError}
-              openingError={openProjectMutation.error}
-              startProject={openProjectMutation.mutate}
-              renameProject={newName => {
-                renameProjectMutation.mutate({ newName, project })
-              }}
-            />
-          ))}
-
-          {page === TabType.settings && <Settings />}
           {process.env.ENSO_CLOUD_CHAT_URL != null ? (
             <Chat
               isOpen={isHelpChatOpen}
