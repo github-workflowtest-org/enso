@@ -13,7 +13,6 @@ import SettingsIcon from 'enso-assets/settings.svg'
 import * as detect from 'enso-common/src/detect'
 
 import * as eventCallbacks from '#/hooks/eventCallbackHooks'
-import * as eventHooks from '#/hooks/eventHooks'
 import * as searchParamsState from '#/hooks/searchParamsStateHooks'
 
 import * as authProvider from '#/providers/AuthProvider'
@@ -23,12 +22,11 @@ import * as localStorageProvider from '#/providers/LocalStorageProvider'
 import * as modalProvider from '#/providers/ModalProvider'
 import * as textProvider from '#/providers/TextProvider'
 
-import type * as assetEvent from '#/events/assetEvent'
 import AssetEventType from '#/events/AssetEventType'
-import type * as assetListEvent from '#/events/assetListEvent'
 import AssetListEventType from '#/events/AssetListEventType'
 
 import type * as assetTable from '#/layouts/AssetsTable'
+import EventListProvider, * as eventListProvider from '#/layouts/AssetsTable/EventListProvider'
 import Category, * as categoryModule from '#/layouts/CategorySwitcher/Category'
 import Chat from '#/layouts/Chat'
 import ChatPlaceholder from '#/layouts/ChatPlaceholder'
@@ -210,10 +208,17 @@ createGetProjectDetailsQuery.createPassiveListener = (id: Project['id']) =>
 
 /** The component that contains the entire UI. */
 export default function Dashboard(props: DashboardProps) {
+  return (
+    <EventListProvider>
+      <DashboardInner {...props} />
+    </EventListProvider>
+  )
+}
+
+/** The component that contains the entire UI. */
+function DashboardInner(props: DashboardProps) {
   const { appRunner, initialProjectName: initialProjectNameRaw, ydocUrl } = props
-
   const { user, ...session } = authProvider.useFullUserSession()
-
   const remoteBackend = backendProvider.useRemoteBackendStrict()
   const localBackend = backendProvider.useLocalBackend()
   const { getText } = textProvider.useText()
@@ -223,6 +228,7 @@ export default function Dashboard(props: DashboardProps) {
   const inputBindings = inputBindingsProvider.useInputBindings()
   const [isHelpChatOpen, setIsHelpChatOpen] = React.useState(false)
 
+  const dispatchAssetListEvent = eventListProvider.useDispatchAssetListEvent()
   const assetManagementApiRef = React.useRef<assetTable.AssetManagementApi | null>(null)
 
   const initialLocalProjectId =
@@ -252,6 +258,7 @@ export default function Dashboard(props: DashboardProps) {
       }
     }
   )
+  const isCloud = categoryModule.isCloud(category)
 
   const [launchedProjects, privateSetLaunchedProjects] = React.useState<Project[]>(
     () => localStorage.get('launchedProjects') ?? []
@@ -267,6 +274,8 @@ export default function Dashboard(props: DashboardProps) {
       )
     }
   )
+
+  const selectedProject = launchedProjects.find(p => p.id === page) ?? null
 
   const setLaunchedProjects = eventCallbacks.useEventCallback(
     (fn: (currentState: Project[]) => Project[]) => {
@@ -296,12 +305,6 @@ export default function Dashboard(props: DashboardProps) {
     privateSetPage(nextPage)
     localStorage.set('page', nextPage)
   })
-
-  const [assetListEvents, dispatchAssetListEvent] =
-    eventHooks.useEvent<assetListEvent.AssetListEvent>()
-  const [assetEvents, dispatchAssetEvent] = eventHooks.useEvent<assetEvent.AssetEvent>()
-
-  const selectedProject = launchedProjects.find(p => p.id === page) ?? null
 
   const openProjectMutation = reactQuery.useMutation({
     mutationKey: ['openProject'],
@@ -384,7 +387,7 @@ export default function Dashboard(props: DashboardProps) {
       }),
   })
 
-  eventHooks.useEventHandler(assetEvents, event => {
+  eventListProvider.useAssetEventListener(event => {
     switch (event.type) {
       case AssetEventType.openProject: {
         const { title, parentId, backendType, id, runInBackground } = event
@@ -579,7 +582,11 @@ export default function Dashboard(props: DashboardProps) {
           <div className="flex h-full w-full">
             <TabBar
               defaultSelectedKey={page}
-              onSelectionChange={setPage}
+              onSelectionChange={key => {
+                // This is SAFE; the keys are statically known to always be the correct type.
+                // eslint-disable-next-line no-restricted-syntax
+                setPage(key as never)
+              }}
               content={
                 <>
                   <aria.TabPanel
@@ -594,10 +601,6 @@ export default function Dashboard(props: DashboardProps) {
                       category={category}
                       setCategory={setCategory}
                       initialProjectName={initialProjectName}
-                      assetListEvents={assetListEvents}
-                      dispatchAssetListEvent={dispatchAssetListEvent}
-                      assetEvents={assetEvents}
-                      dispatchAssetEvent={dispatchAssetEvent}
                       doOpenProject={doOpenProject}
                       doOpenEditor={doOpenEditor}
                       doCloseProject={doCloseProject}
