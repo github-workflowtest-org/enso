@@ -258,7 +258,6 @@ function DashboardInner(props: DashboardProps) {
       }
     }
   )
-  const isCloud = categoryModule.isCloud(category)
 
   const [launchedProjects, privateSetLaunchedProjects] = React.useState<Project[]>(
     () => localStorage.get('launchedProjects') ?? []
@@ -642,9 +641,6 @@ function DashboardInner(props: DashboardProps) {
                 isActive={page === TabType.drive}
                 icon={DriveIcon}
                 labelId="drivePageName"
-                onPress={() => {
-                  setPage(TabType.drive)
-                }}
               >
                 {getText('drivePageName')}
               </tabBar.Tab>
@@ -657,9 +653,6 @@ function DashboardInner(props: DashboardProps) {
                   isActive={page === project.id}
                   icon={EditorIcon}
                   labelId="editorPageName"
-                  onPress={() => {
-                    setPage(project.id)
-                  }}
                   onClose={() => {
                     doCloseProject(project)
                   }}
@@ -677,9 +670,6 @@ function DashboardInner(props: DashboardProps) {
                   isActive={false}
                   icon={SettingsIcon}
                   labelId="settingsPageName"
-                  onPress={() => {
-                    setPage(TabType.settings)
-                  }}
                   onClose={() => {
                     setPage(TabType.drive)
                   }}

@@ -33,8 +33,6 @@ const TAB_RADIUS_PX = 24
 // === TabBarContext ===
 // =====================
 
-const i = 0
-
 /** Context for a {@link TabBarContext}. */
 interface TabBarContextValue {
   readonly updateClipPath: (element: HTMLElement) => void
@@ -56,14 +54,14 @@ function useTabBarContext() {
 
 /** Props for a {@link TabBar}. */
 export interface TabBarProps extends Readonly<React.PropsWithChildren> {
-  defaultSelectedKey?: string
-  onSelectionChange?: (key: string) => void
-  content: React.ReactNode
+  readonly defaultSelectedKey: string
+  readonly onSelectionChange?: (key: string) => void
+  readonly content: React.ReactNode
 }
 
 /** Switcher to choose the currently visible full-screen page. */
 export default function TabBar(props: TabBarProps) {
-  const { children, content, defaultSelectedKey = null, onSelectionChange } = props
+  const { children, content, defaultSelectedKey, onSelectionChange } = props
   const cleanupResizeObserverRef = React.useRef(() => {})
   const tabsRef = React.useRef<HTMLDivElement | null>(null)
   const backgroundRef = React.useRef<HTMLDivElement | null>(null)
@@ -82,6 +80,7 @@ export default function TabBar(props: TabBarProps) {
     const backgroundElement = backgroundRef.current
 
     if (!backgroundElement || !element) {
+      // eslint-disable-next-line no-restricted-syntax
       return
     }
 
@@ -122,24 +121,21 @@ export default function TabBar(props: TabBarProps) {
     }
   }
 
-  /**
-   *
-   */
-  function updateActiveTab(key: React.Key) {
-    if (tabsRef.current) {
-      const selectedTab = tabsRef.current.querySelector(`[data-key="${key}"]`)
-      if (selectedTab && selectedTab instanceof HTMLElement) {
-        updateClipPath(selectedTab)
+  const updateActiveTab = React.useCallback(
+    (key: React.Key) => {
+      if (tabsRef.current) {
+        const selectedTab = tabsRef.current.querySelector(`[data-key="${key}"]`)
+        if (selectedTab && selectedTab instanceof HTMLElement) {
+          updateClipPath(selectedTab)
+        }
       }
-    }
-  }
+    },
+    [updateClipPath]
+  )
 
   React.useEffect(() => {
-    console.log('defaultSelectedKey', defaultSelectedKey)
-    if (defaultSelectedKey != null) {
-      updateActiveTab(defaultSelectedKey)
-    }
-  }, [])
+    updateActiveTab(defaultSelectedKey)
+  }, [defaultSelectedKey, updateActiveTab])
 
   return (
     <aria.Tabs
@@ -147,6 +143,7 @@ export default function TabBar(props: TabBarProps) {
       className="h-auto w-full"
       defaultSelectedKey={defaultSelectedKey}
       onSelectionChange={key => {
+        key = String(key)
         activeTabRef.current = key
         updateActiveTab(key)
         onSelectionChange?.(key)
@@ -216,7 +213,6 @@ interface InternalTabProps extends Readonly<React.PropsWithChildren> {
   readonly isHidden?: boolean
   readonly icon: string
   readonly labelId: text.TextId
-  readonly onPress: () => void
   readonly onClose?: () => void
   readonly onLoadEnd?: () => void
 }
@@ -228,7 +224,6 @@ export function Tab(props: InternalTabProps) {
     icon,
     labelId,
     children,
-    onPress,
     onClose,
     project,
     onLoadEnd,
@@ -243,7 +238,6 @@ export function Tab(props: InternalTabProps) {
 
   React.useEffect(() => {
     if (ref) {
-      console.log('observeElement', ref)
       return observeElement(ref)
     } else {
       return () => {}
