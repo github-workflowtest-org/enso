@@ -29,7 +29,7 @@
 
 <br/>
 
-# [Enso.org](https://enso.org). Get insights you can rely on. In real time.
+# [Enso.org](https://enso.org). Get insights you can rely on. In real time.  
 
 Enso is an award-winning interactive programming language with dual visual and
 textual representations. It is a tool that spans the entire stack, going from
